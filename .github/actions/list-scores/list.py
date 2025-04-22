@@ -30,7 +30,8 @@ for sub in allSubtasks:
     sc = sub['score']
     sid = sub['id']
     for s in range(total - sc, -1, -1):
-        for group in dp[s]:
+        snapshot = list(dp[s])
+        for group in snapshot:
             if len(group) < GROUP_SIZE:
                 new_group = set(group)
                 new_group.add(sid)
