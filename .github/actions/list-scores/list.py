@@ -1,5 +1,6 @@
 import json
 import os
+from itertools import combinations
 
 os.chdir(os.environ.get('GITHUB_WORKSPACE'))
 GROUP_SIZE = int(os.environ.get('GROUPSIZE', 3))
@@ -14,38 +15,40 @@ for pro in problems:
     with open(os.path.join('p' + pro, 'subtasks.json'), 'r', encoding='utf8') as f:
         subtasks = json.load(f)
         for subid, subtask in subtasks['subtasks'].items():
-            scores[pro][subtask['index'] + 1] = subtask['score']
-            if subtask['score'] == 0:
-                continue
-            allSubtasks.append({'id': '{}{}'.format(pro, subtask['index']), 'score': subtask['score']})
-maxIndex = max([len(pro) for pro in scores.values()])
+            sid = '{}{}'.format(pro, subtask['index'])
+            sc = subtask['score']
+            scores[pro][subtask['index'] + 1] = sc
+            allSubtasks.append({'id': sid, 'score': sc})
 
 allSubtasks.sort(key=lambda v: v['score'])
 
-total = len(problems) * 100
-dp = [[] for i in range(total + 1)]
-dp[0] = [set()]
+total = sum([sub['score'] for sub in allSubtasks])
+dp = [set() for _ in range(total + 1)]
+dp[0].add(frozenset())
 
-for subtask in allSubtasks:
-    for i in range(total, -1, -1):
-        for group in dp[i]:
-            temp = group.copy()
-            temp.add(subtask['id'])
-            if len(temp) <= GROUP_SIZE:
-                dp[i + subtask['score']].append(temp)
+for sub in allSubtasks:
+    sc = sub['score']
+    sid = sub['id']
+    for s in range(total - sc, -1, -1):
+        for group in dp[s]:
+            if len(group) < GROUP_SIZE:
+                new_group = set(group)
+                new_group.add(sid)
+                dp[s + sc].add(frozenset(new_group))
 
 output = '| score | count | groups |\n'
 output += '| --- | --- | --- |\n'
-for i in range(1, total + 1):
-    if len(dp[i]) > 1:
+for s in range(1, total + 1):
+    if len(dp[s]) > 1:
         output += '| {} | {} | {} |\n'.format(
-            i,
-            len(dp[i]),
-            ' '.join(['(' + ', '.join(sorted(group)) + ')' for group in dp[i]])
+            s,
+            len(dp[s]),
+            ' '.join(
+                '(' + ', '.join(sorted(g)) + ')' for g in dp[s]
+            )
         )
 
 reportpath = os.environ.get('REPORTPATH')
-
 try:
     with open(reportpath, 'r', encoding='utf8') as f:
         text = f.read()
@@ -54,11 +57,11 @@ except FileNotFoundError:
 
 flag1 = '<!-- scores start -->'
 flag2 = '<!-- scores end -->'
-try:
+if flag1 not in text or flag2 not in text:
+    text += '\n## Scores\n{}\n{}\n'.format(flag1, flag2)
     idx1 = text.index(flag1)
     idx2 = text.index(flag2)
-except ValueError:
-    text += '\n## Scores\n{}\n{}\n'.format(flag1, flag2)
+else:
     idx1 = text.index(flag1)
     idx2 = text.index(flag2)
 
