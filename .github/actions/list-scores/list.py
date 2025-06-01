@@ -18,7 +18,8 @@ for pro in problems:
             sid = '{}{}'.format(pro, subtask['index'])
             sc = subtask['score']
             scores[pro][subtask['index'] + 1] = sc
-            allSubtasks.append({'id': sid, 'score': sc})
+            if sc != 0:
+            	allSubtasks.append({'id': sid, 'score': sc})
 
 allSubtasks.sort(key=lambda v: v['score'])
 
