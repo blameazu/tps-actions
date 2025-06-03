@@ -46,7 +46,7 @@ output += '| --- | --- |\n'
 for s in range(1, total_score + 1):
     # 统计使用 1 到 GROUP_SIZE 个子任务凑出分数 s 的总方案数
     count = sum(dp_count[j][s] for j in range(1, GROUP_SIZE + 1))
-    if count > 1:
+    if count >= 1:
         output += f'| {s} | {count} |\n'
 
 # 将结果插入到 REPORTPATH 指定的报告文件中
